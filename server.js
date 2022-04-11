@@ -1,14 +1,57 @@
 const express = require('express');
+const fs = require('fs');
+const path = require('path');
+
 const { animals } = require('./data/animals.json');
-//use the port provided by heroku, or 3001 for local testing
+
+//use the port provided by heroku (80), or 3001 for local testing
 const PORT = process.env.PORT || 3001;
 const app = express();
+
+//parse incoming string or array data
+app.use(express.urlencoded({ extended: true }));
+//parse incoming JSON data
+app.use(express.json());
 
 //takes req.params.id & animals array as an argument and filter through the animals accordingly
 function findById(id, animalsArray){
     //return the animal as a single object if the id passed through is the same as that animal's id
     const result = animalsArray.filter(animal => animal.id === id)[0]
     return result;
+}
+
+//checks the newly added animal to ensure the name, species, diet, and personality are all valid
+function validateAnimal(animal){
+    if(!animal.name || typeof animal.name !== 'string'){
+        return false;
+    }
+    if(!animal.species || typeof animal.species !== 'string'){
+        return false;
+    }
+    if(!animal.diet || typeof animal.diet !== 'string'){
+        return false;
+    }
+    if(!animal.personalityTraits || !Array.isArray(animal.personalityTraits)){
+        return false;
+    }
+    return true;
+}
+
+//takes req.body and adds the data to the animals array
+function createNewAnimal(body, animalsArray){
+    const animal = body;
+    //add the new animal to the array
+    animalsArray.push(animal);
+    //then add the animal to the json file
+    fs.writeFileSync(
+        path.join(__dirname, './data/animals.json'),
+        //set the animals variable to the animalsArray
+        //null states that we dont want to edit any of our existing data.
+        //2 indicates the number of space characters to use as white space for indenting purposes; this number is capped at 10
+        JSON.stringify({ animals: animalsArray }, null, 2)
+    )
+
+    return body;
 }
 
 //takes req.query & animals array as an argument and filter through the animals accordingly
@@ -70,6 +113,22 @@ app.get('/api/animals/:id', (req, res) => {
         res.sendStatus(404);
     }
 
+})
+
+//sets up enpoint to allow users to add animals to the json file
+app.post('/api/animals', (req, res) => {
+    //req.body contains the incoming content
+    //set id based on what the next index of the array will be
+    req.body.id = animals.length.toString();
+
+    //if any data in req.body is incorrect, sent 400 error back
+    if(!validateAnimal(req.body)){
+        res.status(400).send('The animal is not properly formatted');
+    } else {
+        //add animal to json file and animals array
+        const animal = createNewAnimal(req.body, animals);
+        res.json(animal);
+    }
 })
 
 //host the server
