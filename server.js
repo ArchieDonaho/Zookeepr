@@ -1,7 +1,7 @@
 const express = require('express');
 const { animals } = require('./data/animals.json');
 //use the port provided by heroku, or 3001
-cosnt PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3001;
 const app = express();
 
 //takes req.query as an argument and filter through the animals accordingly
