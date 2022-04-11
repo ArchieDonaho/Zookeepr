@@ -1,10 +1,17 @@
 const express = require('express');
 const { animals } = require('./data/animals.json');
-//use the port provided by heroku, or 3001
+//use the port provided by heroku, or 3001 for local testing
 const PORT = process.env.PORT || 3001;
 const app = express();
 
-//takes req.query as an argument and filter through the animals accordingly
+//takes req.params.id & animals array as an argument and filter through the animals accordingly
+function findById(id, animalsArray){
+    //return the animal as a single object if the id passed through is the same as that animal's id
+    const result = animalsArray.filter(animal => animal.id === id)[0]
+    return result;
+}
+
+//takes req.query & animals array as an argument and filter through the animals accordingly
 function filterByQuery(query, animalsArray){
     //initialize the array for personality traits
     let personalityTraitsArray = [];
@@ -42,7 +49,7 @@ function filterByQuery(query, animalsArray){
     return filterdResults;
 }
 
-//sets up the api endpoint and filters the query
+//sets up an api endpoint for query search, returns multiple animals
 app.get('/api/animals', (req, res) => {
     let results = animals;
     //if a query was entered, filter the animals by that query
@@ -51,6 +58,18 @@ app.get('/api/animals', (req, res) => {
     }
 
     res.json(results);
+})
+
+//sets up an api endpoint for parameter search, returns one animal
+app.get('/api/animals/:id', (req, res) => {
+    const result = findById(req.params.id, animals);
+    if(result){
+        res.json(result);
+    } else {
+        //send error if the parameter is nonexistent
+        res.sendStatus(404);
+    }
+
 })
 
 //host the server
