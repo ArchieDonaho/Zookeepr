@@ -4,6 +4,7 @@ const path = require('path');
 
 const { animals } = require('./data/animals.json');
 
+//middleware
 //use the port provided by heroku (80), or 3001 for local testing
 const PORT = process.env.PORT || 3001;
 const app = express();
@@ -12,6 +13,9 @@ const app = express();
 app.use(express.urlencoded({ extended: true }));
 //parse incoming JSON data
 app.use(express.json());
+
+//allows files in the public folder to be static resources and able to be accessed w/o server endpoints
+app.use(express.static('public'));
 
 //takes req.params.id & animals array as an argument and filter through the animals accordingly
 function findById(id, animalsArray){
@@ -129,6 +133,26 @@ app.post('/api/animals', (req, res) => {
         const animal = createNewAnimal(req.body, animals);
         res.json(animal);
     }
+})
+
+//starts user at homepage
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'));
+})
+
+//directs user to animals page
+app.get('/animals', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/animals.html'))
+})
+
+//directs users to zookeepers page
+app.get('/zookeepers', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/zookeepers.html'));
+})
+
+//any route that wasn't previously defined will fall under this request and will receive the homepage as the response
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, './public/index.html'))
 })
 
 //host the server
